@@ -32,7 +32,7 @@ import subprocess
 
 try:
     import readline
-    # macOS 的 libedit 在处理中文输入时有退格问题，这四行修复它
+    # macOS's libedit has a backspace issue when handling Chinese input; these four lines fix it.
     readline.parse_and_bind('set bind-tty-special-chars off')
     readline.parse_and_bind('set input-meta on')
     readline.parse_and_bind('set output-meta on')
@@ -116,7 +116,7 @@ def agent_loop(messages: list):
 # ── Entry point ──────────────────────────────────────────
 if __name__ == "__main__":
     print("s01: Agent Loop")
-    print("输入问题，回车发送。输入 q 退出。\n")
+    print("Enter your question and press Enter to send. Type 'q' to exit.\n")
 
     history = []
     while True:

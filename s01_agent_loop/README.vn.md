@@ -12,21 +12,21 @@
 
 ## Vấn đề
 
-Bỏ một câu hỏi cho LLM: "Liệt kê các file trong thước của tôi và chạy XXX.py đi".
+Bạn hỏi LLM: "Liệt kê các file trong thư mục của tôi và chạy XXX.py đi".
 
-Model xuất ra được một lệnh bash, nhưng xong lệnh là dừng. Nó tự chạy cho bạn được đâu, xem kết quả rồi tiếp tục reasoning cũng không.
+Model xuất ra được một lệnh bash, nhưng xong lệnh là dừng. Nó không tự chạy cho bạn được, không xem kết quả rồi tiếp tục suy luận cũng không.
 
 Bạn có thể tự chạy lệnh đó, paste output lại vào cho nó xem, rồi chờ lệnh tiếp theo. Làm đi làm lại như vậy nhiều lần.
 
-Mỗi lần quay lại đó bạn đang là một lớp middleware. Và quá trình đó hoàn toàn có thể tự động hóa.
+Mỗi lần quay lại đó bạn đang là một lớp điều phối (middle layer). Và quá trình đó hoàn toàn có thể tự động hóa.
 
 ---
 
 ## Giải pháp
 
-![Agent Loop](images/agent-loop.svg)
+![Agent Loop](images/agent-loop.en.svg)
 
-Một vòng lặp `while True`, model gọi tool thì tiếp tục, không gọi thì dừng. Toàn bộ chỉ có hai tín hiệu:
+Một vòng lặp `while True`: model gọi tool thì tiếp tục, không gọi thì dừng. Toàn bộ chỉ có hai tín hiệu:
 
 | Tín hiệu | Ý nghĩa | Hành động |
 |------|------|---------|
