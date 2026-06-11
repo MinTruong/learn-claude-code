@@ -1,2 +1,3 @@
 - [Agent Loop S1](.claude/memory/s01_agent_loop_core.md) — Core agent loop pattern: while tool_use → execute → feed back
 - [S01 Example](.claude/memory/s01_agent_loop_example.md) — Worked example: "Tạo file hello.py" with full request/response/messages state per API call
+- [S02 Example](.claude/memory/s02_tool_use_example.md) — Worked examples: parallel, sequential, and mixed tool execution patterns with dispatch map
