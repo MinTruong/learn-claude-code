@@ -145,7 +145,12 @@ TOOL_HANDLERS = {
 #  NEW in s03: Three-Gate Permission Pipeline
 # ═══════════════════════════════════════════════════════════
 
-# Gate 1: Hard deny list — always forbidden
+# ═══════════════════════════════════════════════════════════
+#  Gate 1: Deny List (hard block)
+#  So khớp substring đơn giản — nếu command chứa pattern
+#  nào trong danh sách, chặn ngay, không hỏi user.
+#  Chỉ áp dụng cho bash (được gọi trong check_permission).
+# ═══════════════════════════════════════════════════════════
 DENY_LIST = ["rm -rf /", "sudo", "shutdown", "reboot", "mkfs", "dd if=", "> /dev/sda"]
 
 def check_deny_list(command: str) -> str | None:
@@ -155,7 +160,12 @@ def check_deny_list(command: str) -> str | None:
     return None
 
 
-# Gate 2: Rule matching — context-dependent checks
+# ═══════════════════════════════════════════════════════════
+#  Gate 2: Rule Matching (context-dependent checks)
+#  Mỗi rule định nghĩa: tool(s) nào bị check, hàm kiểm tra
+#  args, và message hiển thị. Thêm rule = thêm 1 entry, không
+#  cần sửa code ở đâu khác.
+# ═══════════════════════════════════════════════════════════
 PERMISSION_RULES = [
     {"tools": ["write_file", "edit_file"],
      "check": lambda args: not (WORKDIR / args.get("path", "")).resolve().is_relative_to(WORKDIR),
@@ -172,7 +182,11 @@ def check_rules(tool_name: str, args: dict) -> str | None:
     return None
 
 
-# Gate 3: User approval — wait for confirmation after rule match
+# ═══════════════════════════════════════════════════════════
+#  Gate 3: User Approval (interactive confirmation)
+#  Khi Gate 2 match, dừng lại, in cảnh báo + chi tiết tool call,
+#  chờ user nhập y/N. Default là N (deny by default).
+# ═══════════════════════════════════════════════════════════
 def ask_user(tool_name: str, args: dict, reason: str) -> str:
     print(f"\n\033[33m⚠  {reason}\033[0m")
     print(f"   Tool: {tool_name}({args})")
@@ -180,7 +194,12 @@ def ask_user(tool_name: str, args: dict, reason: str) -> str:
     return "allow" if choice in ("y", "yes") else "deny"
 
 
-# Pipeline: all three gates chained
+# ═══════════════════════════════════════════════════════════
+#  Permission Pipeline: 3 gates chained
+#  Gate 1 → Gate 2 → Gate 3 → execute (nếu tất cả pass)
+#  return True  = cho phép chạy tool
+#  return False = chặn tool (content trả về "Permission denied.")
+# ═══════════════════════════════════════════════════════════
 def check_permission(block) -> bool:
     if block.name == "bash":
         reason = check_deny_list(block.input.get("command", ""))
@@ -217,7 +236,9 @@ def agent_loop(messages: list):
 
             print(f"\033[36m> {block.name}\033[0m")
 
-            # s03 change: run through permission pipeline before executing
+            # ← MỚI Ở S03: chạy permission pipeline trước khi thực thi tool
+            # Nếu check_permission trả về False, tool KHÔNG được gọi,
+            # model nhận được "Permission denied." thay vì output thật.
             if not check_permission(block):
                 results.append({"type": "tool_result", "tool_use_id": block.id,
                                 "content": "Permission denied."})
@@ -233,7 +254,7 @@ def agent_loop(messages: list):
 
 if __name__ == "__main__":
     print("s03: Permission")
-    print("输入问题，回车发送。输入 q 退出。\n")
+    print("Enter a question, press Enter. Type q to quit.\n")
 
     history = []
     while True:

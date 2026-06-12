@@ -1,65 +1,43 @@
 ---
 name: s02-tool-use-example
-description: Worked examples for S02 tool dispatch — parallel, sequential, and mixed tool execution patterns
+description: Worked examples for S02 tool dispatch map — parallel, sequential, and mixed tool execution with code-path tracing
 metadata:
   type: reference
 ---
 
-# S02 Tool Use — 3 Worked Examples
+# S02 Tool Dispatch Map — 3 Worked Examples (2026-06-12)
 
-## Example 1: Parallel — Independent tools in one response
+Rewritten in S03-style code-path tracing format. Each example traces dispatch map lookup, handler execution, and message state.
 
-**Prompt:** *"Đọc file README.md và tìm tất cả file Python"*
+## Example 1: Parallel — read_file + glob
+- 2 independent tools in 1 response
+- `TOOL_HANDLERS.get("read_file")` → `run_read` at line 165
+- `TOOL_HANDLERS.get("glob")` → `run_glob` at line 165
+- Both execute, results collected together → single API call round-trip
+- [Full trace](s02_tool_use/example.md) — lines 165-166, 73-80, 105-114
 
-Model returns 2 `tool_use` blocks in a single response:
-- `read_file(path="README.md")` + `glob(pattern="**/*.py")` — independent, no ordering needed
-- Harness dispatches both via `TOOL_HANDLERS[name](**input)`, collects results, sends 1 follow-up
-- 1 API call for tool execution, 1 for final response
+## Example 2: Sequential — read_file → edit_file
+- 2 API calls required: cannot edit without knowing content
+- Call 1: `run_read(path="code.py")` returns file content with `timeout=120`
+- Call 2: `run_edit(path="...", old_text="timeout=120", new_text="timeout=60")` at line 93-102
+  - `safe_path()` at line 66-70 validates path
+  - `read_text()` then `replace()` then `write_text()`
+- Call 3: model confirms → `end_turn`
 
-**Flow:**
-```
-read_file ──┐
-            ├──> gom kết quả → LLM → end_turn
-glob ───────┘
-```
+## Example 3: Mixed — parallel read → sequential write
+- Call 1: 2 `read_file` tools in parallel for example.md + README.md
+- Call 2: 1 `write_file` tool writes summary based on both readings
+  - `run_write()` at line 83-90: `safe_path()` → `mkdir(parents=True)` → `write_text()`
+- Call 3: model confirms → `end_turn`
 
-## Example 2: Sequential — Tool output determines next tool
-
-**Prompt:** *"Đọc code.py, tìm hàm run_bash, sửa timeout 120→60"*
-
-3 API calls, each with 1 tool:
-1. `read_file(path="code.py")` → model sees `timeout=120`
-2. `edit_file(path="code.py", old_text="timeout=120", new_text="timeout=60")` → confirms edit
-3. `end_turn` — done
-
-**Flow:**
-```
-read_file → LLM → edit_file → LLM → end_turn
-```
-
-## Example 3: Mixed — Parallel read then sequential write
-
-**Prompt:** *"Dựa vào 2 ví dụ trên viết file example.md"*
-
-2 API calls:
-1. (Parallel) `read_file(ex1)` + `read_file(ex2)` → model learns structure
-2. (Sequential) `write_file(path, content)` → model writes new file
-
-## Key Insight
-
-- **Parallel** = model guesses which tools it needs without seeing results first (independent tasks)
-- **Sequential** = model must see tool output before deciding next step (dependent tasks)
-- **Mixed** = some read tools can be parallelized, then the write depends on what was read
-
-## Comparison Table
-
-| Pattern | Example | Tool calls | API calls | Order matters? | Token cost |
-|---|---|---|---|---|---|
-| Parallel | read + glob | 2 | 1 | No | ~1,600 |
-| Sequential | read → edit | 2 | 2 | Yes | ~1,800 |
-| Mixed | 2×read → write | 3 | 2 | Partial | ~2,000 |
+## Key difference from S01
+- Line 165: `handler = TOOL_HANDLERS.get(block.name)` replaces S01's hardcoded `run_bash()`
+- Line 166: `handler(**block.input)` unpacking — replaces `run_bash(block.input["command"])`
+- `safe_path()` at line 66-70 prevents path traversal attacks
+- 5 tools instead of 1 (bash, read_file, write_file, edit_file, glob)
 
 ## How to apply:
-- When reviewing tool dispatch patterns, reference these 3 examples to distinguish parallel vs sequential execution
-- Parallel in one response reduces API call count and latency
-- Sequential is unavoidable when later tools depend on earlier results
+- Reference Example 1 for parallel execution (most efficient token usage)
+- Reference Example 2 for demonstrating why sequential flows are necessary
+- Reference Example 3 for real-world mixed patterns (read-then-write)
+- The dispatch map pattern (TOOL_HANDLERS dict) is reused in every subsequent chapter

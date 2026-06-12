@@ -1,3 +1,4 @@
-- [Agent Loop S1](.claude/memory/s01_agent_loop_core.md) — Core agent loop pattern: while tool_use → execute → feed back
-- [S01 Example](.claude/memory/s01_agent_loop_example.md) — Worked example: "Tạo file hello.py" with full request/response/messages state per API call
-- [S02 Example](.claude/memory/s02_tool_use_example.md) — Worked examples: parallel, sequential, and mixed tool execution patterns with dispatch map
+- [Agent Loop S1](.claude/memory/s01_agent_loop_core.md) — Core agent loop pattern: while tool_use, code-path tracing, run_bash() at line 104
+- [S01 Example](.claude/memory/s01_agent_loop_example.md) — 3 worked examples (single/multi/no tool) with code-path tracing, all lines from code.py
+- [S02 Example](.claude/memory/s02_tool_use_example.md) — 3 examples (parallel/sequential/mixed) with TOOL_HANDLERS dispatch trace, handler(**block.input) at line 166
+- [S03 Example](.claude/memory/s03_permission_example.md) — 3 examples (auto-allow/hard-deny/user-ask) with 3-gate permission pipeline, code-path tracing template
